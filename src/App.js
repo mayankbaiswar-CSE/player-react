@@ -1,50 +1,65 @@
-import React, { Component } from "react"
-import logo from "./logo.svg"
-import "./App.css"
+import React from 'react';
+import ShakaPlayer from 'shaka-player-react';
 
-class LambdaDemo extends Component {
-  constructor(props) {
-    super(props)
-    this.state = { loading: false, msg: null }
-  }
+const STREAMS = [
+    {
+        name: 'Angel One MPEG-DASH',
+        src: 'https://storage.googleapis.com/shaka-demo-assets/angel-one/dash.mpd'
+    },
+    {
+        name: 'Big Buck Bunny HLS',
+        src:
+            'https://storage.googleapis.com/shaka-demo-assets/bbb-dark-truths-hls/hls.m3u8'
+    }
+];
 
-  handleClick = api => e => {
-    e.preventDefault()
+export const App = () => {
+    const [show, setShow] = React.useState(false);
+    const [chromeless, setChromeless] = React.useState(false);
+    const ref = React.useRef(null);
+    const inputRef = React.useRef(null);
 
-    this.setState({ loading: true })
-    fetch("/.netlify/functions/" + api)
-      .then(response => response.json())
-      .then(json => this.setState({ loading: false, msg: json.msg }))
-  }
+    React.useEffect(() => {
+        window.getShakaInst = () => ref.current;
+    }, []);
 
-  render() {
-    const { loading, msg } = this.state
+    function onToggle() {
+        setShow(!show);
+    }
+
+    function onChromeless() {
+        setChromeless(!chromeless);
+    }
+
+    const [src, setSrc] = React.useState(STREAMS[0].src);
+
+    function onSelectSrc(event) {
+        setSrc(event.target.value);
+    }
 
     return (
-      <p>
-        <button onClick={this.handleClick("hello")}>{loading ? "Loading..." : "Call Lambda"}</button>
-        <button onClick={this.handleClick("async-dadjoke")}>{loading ? "Loading..." : "Call Async Lambda"}</button>
-        <br />
-        <span>{msg}</span>
-      </p>
-    )
-  }
+        <div>
+            <div style={{ display: 'flex' }}>
+                <input ref={inputRef} style={{ width: '40vw'}} type="text" />&nbsp;
+                <button onClick={() => setSrc(inputRef.current.value)}>Play</button>
+            </div>
+            <br />
+            <div>
+                <button onClick={onToggle}>{show ? 'Hide' : 'Show'}</button>
+            </div>
+            <div>
+                <input type="checkbox" onChange={onChromeless} /> Chromeless
+            </div>
+            <div>
+                <select value={src} onChange={onSelectSrc}>
+                    {STREAMS.map(stream => (
+                        <option value={stream.src}>{stream.name}</option>
+                    ))}
+                </select>
+            </div>
+            {show && (
+                <ShakaPlayer ref={ref} autoPlay src={src} chromeless={chromeless} />
+            )}
+        </div>
+    );
 }
-
-class App extends Component {
-  render() {
-    return (
-      <div className="App">
-        <header className="App-header">
-          <img src={logo} className="App-logo" alt="logo" />
-          <p>
-            Edit <code>src/App.js</code> and save to reload.
-          </p>
-          <LambdaDemo />
-        </header>
-      </div>
-    )
-  }
-}
-
-export default App
